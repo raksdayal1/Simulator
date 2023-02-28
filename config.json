@@ -1,0 +1,66 @@
+{
+  "IP Address" : "127.0.0.1",
+  "Vehicles": {
+    "Quadcopters": {
+      "quad1": {
+        "sysID": 1,
+        "X Start": 10,
+        "Y Start": 2,
+        "Z Start": 0.1
+      },
+      "quad2": {
+        "sysID": 2,
+        "X Start": 10,
+        "Y Start": 9,
+        "Z Start": 0.1
+      },
+      "quad3": {
+        "sysID": 3,
+        "X Start": 3,
+        "Y Start": 5,
+        "Z Start": 0.1
+      }
+    },
+    "FixedWings": {
+      "fw1": {
+        "sysID": 5,
+        "X Start": 3,
+        "Y Start": 5,
+        "Z Start": 0.1
+      },
+      "fw2": {
+        "sysID": 6,
+        "X Start": 3,
+        "Y Start": 5,
+        "Z Start": 0.1
+      }
+    }        
+  },
+  "Home": {
+    "latitude": 37.894385845,
+    "longitude": -97.63678242,
+    "altitude": 230
+  },
+  "Environment": {
+    "Geofence" :{
+      "NE" : [],
+      "NW" : [],
+      "SE" : [],
+      "SW" : []
+    },
+    "Obstacles": {
+      "obs1":{
+        "X": 0,
+        "Y": 0
+      },
+      "obs2":{
+        "X": 0,
+        "Y": 0
+      },
+      "obs3":{
+        "X": 0,
+        "Y": 0
+      }
+    }
+  }
+}
