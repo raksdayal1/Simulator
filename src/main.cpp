@@ -14,7 +14,7 @@
 #include <string>
 
 #include "sim.h"
-//#include "libAP_JSON.h"
+#include "simplerover.h"
 
 #ifdef _WIN32
     #include <Windows.h>
@@ -31,6 +31,8 @@ using json = nlohmann::json;
 int main(int argc, char* argv[])
 {
     int result = 0;
+
+    std::vector<Vehicles> vData;
     
     // read the config file. file should be in same level as the build folder
     std::ifstream file("../config.json");
@@ -74,7 +76,7 @@ int main(int argc, char* argv[])
                 Vehicles* Quads = new Vehicles[total_quads];
 
                 int Counter(0);
-                for (json::iterator it = vjson["Quadcopters"].begin(); it != vjson["Quadcopters"].end(); ++it) {
+                for ( json::iterator it = vjson["Quadcopters"].begin(); it != vjson["Quadcopters"].end(); ++it ) {
                     // std::cout << it.key() << " : " << it.value() << "\n";
                     // Key is unique name given to the vehicle
                     Quads[Counter].name = it.key();
@@ -82,9 +84,14 @@ int main(int argc, char* argv[])
                     Quads[Counter].x_start = it.value()["X Start"];
                     Quads[Counter].y_start = it.value()["Y Start"];
                     Quads[Counter].z_start = it.value()["Z Start"];
+                    Quads[Counter].port_no = 9002 + 10*(Quads[Counter].id-1);
 
+                    Quads[Counter].type = QUAD_TYPE;
+                    
+                    vData.push_back(Quads[Counter]);
                     Counter++;
                 }
+
 
             } //end if contains quadcopters
             else 
@@ -105,7 +112,7 @@ int main(int argc, char* argv[])
                 Vehicles* FW = new Vehicles[total_fw];
 
                 int Counter(0);
-                for (json::iterator it = vjson["FixedWings"].begin(); it != vjson["FixedWings"].end(); ++it) {
+                for ( json::iterator it = vjson["FixedWings"].begin(); it != vjson["FixedWings"].end(); ++it ) {
                     // std::cout << it.key() << " : " << it.value() << "\n";
                     // Key is unique name given to the vehicle
                     FW[Counter].name = it.key();
@@ -113,7 +120,11 @@ int main(int argc, char* argv[])
                     FW[Counter].x_start = it.value()["X Start"];
                     FW[Counter].y_start = it.value()["Y Start"];
                     FW[Counter].z_start = it.value()["Z Start"];
+                    FW[Counter].port_no = 9002 + 10*(FW[Counter].id-1);
 
+                    FW[Counter].type = FW_TYPE;
+
+                    vData.push_back(FW[Counter]);
                     Counter++;
                 }
 
@@ -136,7 +147,7 @@ int main(int argc, char* argv[])
                 Vehicles* Rover = new Vehicles[total_rov];
 
                 int Counter(0);
-                for (json::iterator it = vjson["Rovers"].begin(); it != vjson["Rovers"].end(); ++it) {
+                for ( json::iterator it = vjson["Rovers"].begin(); it != vjson["Rovers"].end(); ++it ) {
                     // std::cout << it.key() << " : " << it.value() << "\n";
                     // Key is unique name given to the vehicle
                     Rover[Counter].name = it.key();
@@ -144,9 +155,14 @@ int main(int argc, char* argv[])
                     Rover[Counter].x_start = it.value()["X Start"];
                     Rover[Counter].y_start = it.value()["Y Start"];
                     Rover[Counter].z_start = it.value()["Z Start"];
+                    Rover[Counter].port_no = 9002 + 10*(Rover[Counter].id-1);
 
+                    Rover[Counter].type = ROVER_TYPE;
+                    
+                    vData.push_back(Rover[Counter]);
                     Counter++;
                 }
+                
 
             } // end if contains rover
             else
@@ -161,6 +177,29 @@ int main(int argc, char* argv[])
             exit(-1);
         } //end if else simconfig contains vehicles
 
+        std::vector<int> temp;
+        bool DUPLICATE_FLAG(false);
+
+        // Run vehicle checks for duplicate sysID/portnumbers
+        for ( auto it = begin (vData); it != end (vData); ++it ) {
+
+            if ( std::find(temp.begin(), temp.end(), it->port_no) != temp.end() ) {
+                cout << "[Config]: Duplicate found with sysID: " << it->id << endl;
+                DUPLICATE_FLAG = true;
+            }
+            else {
+                temp.push_back(it->port_no);
+            }
+
+        }
+
+        // Do NOT continue if duplicate found and terminate the program
+        if ( DUPLICATE_FLAG )
+        { 
+            cout << "[Config]: Terminating program as non unique sysIDs found in config file" << endl;
+            exit(-1);
+        }
+
         cout << "[Config]: Reading vehicle configurations complete" << endl;         
 
     }
@@ -169,10 +208,59 @@ int main(int argc, char* argv[])
         cout << "[Simulation]: No file found. Please make sure 'config.json' exists on the same level as the build folder" << endl;
         exit(-1);
     }
+  
 
+    // CMD Backend starts here
+    double  tmax, dt;
+    
+    tmax = 50000.00;
+    dt = 1.0/1000;
 
-    // TODO: Start CMD backend here
+    vector<Block*> vObj0;
+    vector<vector<Block*>> vStage;
 
+    for (auto it = begin (vData); it != end (vData); ++it) {
+
+        if ( it->type == QUAD_TYPE )
+        {
+            // cout << "Pushing quad" <<endl;
+            // vObj0.push_back(rov);
+        }
+        else if ( it->type == FW_TYPE )
+        {
+            // cout << "pushing fw"<<endl;
+            // vObj0.push_back(rov);
+        }
+        else if ( it->type == ROVER_TYPE )
+        {
+            // cout << "pushing rover"<<endl;
+            vObj0.push_back(new SimpleRover(it->x_start, it->y_start, it->z_start, it->port_no));
+            
+        }
+        else
+        {
+            cout << "[Simulation]: SEVERE ERROR...Unidentified vehicle type. Terminating program" <<endl;
+        }
+
+    }
+   
+    vStage.push_back(vObj0);
+
+    double dts[] = {dt};
+    Sim *sim = new Sim(dts, tmax, vStage);
+
+    sim->run();
+    sim->cleanup();
+
+    // delete sim
+    delete sim;
+
+    // delete all vehicles
+    for (auto it : vObj0)
+    {
+        delete it;
+    }
+   
     
     return result;
 }
