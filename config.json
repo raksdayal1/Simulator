@@ -29,12 +29,20 @@
         "Z Start": 0.1
       },
       "fw2": {
+        "sysID": 4,
+        "X Start": 3,
+        "Y Start": 5,
+        "Z Start": 0.1
+      }
+    },
+    "Rovers": {
+      "rover1": {
         "sysID": 6,
         "X Start": 3,
         "Y Start": 5,
         "Z Start": 0.1
       }
-    }        
+    }      
   },
   "Home": {
     "latitude": 37.894385845,
@@ -62,5 +70,9 @@
         "Y": 0
       }
     }
+  },
+  "Simulation": {
+    "hz": 1000,
+    "T Max" : 5000000.0
   }
 }
